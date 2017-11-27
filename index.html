@@ -52,22 +52,27 @@
         <div class="hole"></div>
     </main>
     <script>
-        let score, angle, power
+        let score, angle, power, powerTick
         const start = document.querySelector('.start')
         const ball = document.querySelector('.ball')
         const hole = document.querySelector('.hole')
         let callback = null
 
         reset();
-        document.onkeypress = function() { shoot() }
+        document.onkeypress = function() { shootRandom() }
 
-        function shoot(pCallback) {
+        function shootRandom(pCallback) {
+            rndAngle = randomBetween(0, 2 * Math.PI)
+            rndPower = randomBetween(0, 100)
+            shoot(rndAngle, rndPower, pCallback)
+        }
+
+        function shoot(pAngle, pPower, pCallback) {
+            reset()
+            setAngle(pAngle)
+            setPower(pPower)
             callback = pCallback || null
 
-            reset()
-
-            setAngle(randomBetween(0, 2 * Math.PI))
-            setPower(randomBetween(0, 100))
             console.log('Shooting. Power: ' + power + ' Angle: ' + angle)
 
             requestAnimationFrame(tick)
@@ -79,6 +84,8 @@
         }
 
         function reset() {
+            angle = 0
+            power = 0
             moveBall(getPosition(start))
         }
 
@@ -88,12 +95,12 @@
 
         function tick() {
             const pos = getPosition(ball)
-            pos.x += Math.cos(angle) * power * 0.1
-            pos.y += Math.sin(angle) * power * 0.1
+            pos.x += Math.cos(angle) * powerTick * 0.1
+            pos.y += Math.sin(angle) * powerTick * 0.1
             moveBall(pos)
-            power -= 1;
-            if (power <= 0 || isOutOfBounds()) {
-                power = 0
+            powerTick -= 1;
+            if (powerTick <= 0 || isOutOfBounds()) {
+                powerTick = 0
                 return endGo();
             }
             requestAnimationFrame(tick)
@@ -110,6 +117,7 @@
 
         function setPower(p) {
             power = p
+            powerTick = power
             document.querySelector('.power').textContent = 'Power: ' + Math.round(power)
         }
 
@@ -130,7 +138,7 @@
         }
 
         function endless() {
-            shoot(endless)
+            shootRandom(endless)
         }
 
         function isOutOfBounds() {
@@ -150,6 +158,29 @@
             const dx = Math.pow(Math.abs(ball.x - hole.x), 2)
             const dy = Math.pow(Math.abs(ball.y - hole.y), 2)
             return Math.sqrt(dx + dy)
+        }
+
+        function learn(times) {
+            times = times || 20
+            const training_X = []
+            const training_y = []
+            learnTrain(_ => {
+                console.log(JSON.stringify(training_X))
+                console.log(JSON.stringify(training_y))
+            })
+
+            function learnTrain(callback) {
+                if (times <= 0) {
+                    callback()
+                    return
+                }
+                times--
+                shootRandom(_ => {
+                    training_X.push([Math.round(angle*100)/100, Math.round(power)])
+                    training_y.push(score)
+                    learnTrain(callback)
+                })
+            }
         }
 
     </script>
