@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ball game</title>
+    <style>
+        header {
+            display: flex;
+        }
+        header div {
+            flex: 1;
+            padding: 20px;
+        }
+        main {
+            width: 300px;
+            height: 500px;
+            border: 1px solid #000;
+            margin: 20px auto 0;
+            background: #00a86b;
+            position: relative;
+        }
+        main div {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        main .start {
+            background: #aaa;
+            bottom: 20px;
+            left: 50%;
+        }
+        main .hole {
+            background: #000;
+            top: 80px;
+            left: 20%;
+        }
+        main .ball {
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="power">Power: 0</div>
+        <div class="angle">Angle: 0</div>
+        <div class="score">Score: 999</div>
+    </header>
+    <main>
+        <div class="start"></div>
+        <div class="ball"></div>
+        <div class="hole"></div>
+    </main>
+    <script>
+        let score, angle, power
+        const start = document.querySelector('.start')
+        const ball = document.querySelector('.ball')
+        const hole = document.querySelector('.hole')
+        let callback = null
+
+        reset();
+        document.onkeypress = shoot
+
+        function shoot(pCallback) {
+            callback = pCallback || null
+
+            reset()
+
+            setAngle(randomBetween(0, 2 * Math.PI))
+            setPower(randomBetween(0, 100))
+            console.log('Shooting. Power: ' + power + ' Angle: ' + angle)
+
+            requestAnimationFrame(tick)
+        }
+
+        function moveBall({ x: x, y: y }) {
+            ball.style.left = x + 'px'
+            ball.style.top = y + 'px'
+        }
+
+        function reset() {
+            moveBall(getPosition(start))
+        }
+
+        function getPosition(el) {
+            return { x: el.offsetLeft, y: el.offsetTop }
+        }
+
+        function tick() {
+            const pos = getPosition(ball)
+            pos.x += Math.cos(angle) * power * 0.1
+            pos.y += Math.sin(angle) * power * 0.1
+            moveBall(pos)
+            power -= 1;
+            if (power <= 0 || isOutOfBounds()) {
+                power = 0
+                return endGo();
+            }
+            requestAnimationFrame(tick)
+        }
+
+        function randomBetween(a, b) {
+            return Math.random() * (b - a) + a;
+        }
+
+        function setAngle(p) {
+            angle = p
+            document.querySelector('.angle').textContent = 'Angle: ' + (Math.round(angle*100)/100)
+        }
+
+        function setPower(p) {
+            power = p
+            document.querySelector('.power').textContent = 'Power: ' + Math.round(power)
+        }
+
+        function calculateScore() {
+            if (isOutOfBounds()) {
+                score = 999
+            } else {
+                score = distanceBetween(getPosition(ball), getPosition(hole))
+            }
+            document.querySelector('.score').textContent = 'Score: ' + Math.round(score)
+        }
+
+        function endGo() {
+            calculateScore()
+            if (callback) {
+                callback()
+            }
+        }
+
+        function endless() {
+            shoot(endless)
+        }
+
+        function isOutOfBounds() {
+            const pos = getPosition(ball)
+            if (
+                pos.x < 0 ||
+                pos.x > 300 ||
+                pos.y < 0 ||
+                pos.y > 500
+            ) {
+                return true
+            }
+            return false
+        }
+
+        function distanceBetween(ball, hole) {
+            const dx = Math.pow(Math.abs(ball.x - hole.x), 2)
+            const dy = Math.pow(Math.abs(ball.y - hole.y), 2)
+            return Math.sqrt(dx + dy)
+        }
+
+    </script>
+</body>
+</html>
