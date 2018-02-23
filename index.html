@@ -11,11 +11,15 @@
             flex: 1;
             padding: 20px;
         }
+        section {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0 0;
+        }
         main {
             width: 300px;
             height: 500px;
             border: 1px solid #000;
-            margin: 20px auto 0;
             background: #00a86b;
             position: relative;
         }
@@ -38,6 +42,15 @@
         main .ball {
             background: #fff;
         }
+        aside {
+            width: 200px;
+            margin-left: 20px;
+        }
+        aside button {
+            display: block;
+            width: 100%;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
@@ -46,11 +59,18 @@
         <div class="angle">Angle: 0</div>
         <div class="score">Score: 999</div>
     </header>
-    <main>
-        <div class="start"></div>
-        <div class="ball"></div>
-        <div class="hole"></div>
-    </main>
+    <section>
+        <main>
+            <div class="start"></div>
+            <div class="ball"></div>
+            <div class="hole"></div>
+        </main>
+        <aside>
+            <button id="btnShootRandom">Shoot Random</button>
+            <button id="btnTrain">Train (20)</button>
+            <button id="btnShootToWin">Shoot To Win</button>
+        </aside>
+    </section>
     <script>
         let score, angle, power, powerTick
         const start = document.querySelector('.start')
@@ -59,7 +79,9 @@
         let callback = null
 
         reset();
-        document.onkeypress = function() { shootRandom() }
+        document.getElementById('btnShootRandom').onclick = function() { shootRandom() }
+        document.getElementById('btnTrain').onclick = function() { learn(20) }
+        document.getElementById('btnShootToWin').onclick = function() { shootToWin() }
 
         function shootRandom(pCallback) {
             rndAngle = randomBetween(0, 2 * Math.PI)
@@ -180,6 +202,24 @@
                     training_y.push(score)
                     learnTrain(callback)
                 })
+            }
+        }
+
+        function shootToWin() {
+            shootRandom()
+        }
+
+        function disableButtons() {
+            const buttons = document.querySelectorAll('button')
+            for (var i in buttons) {
+                buttons[i].disabled = true
+            }
+        }
+
+        function enableButtons() {
+            const buttons = document.querySelectorAll('button')
+            for (var i in buttons) {
+                buttons[i].disabled = false
             }
         }
 
