@@ -63,7 +63,8 @@
         </main>
         <aside>
             <button id="btnShootRandom">Shoot Random</button>
-            <button id="btnTrain">Train (20)</button>
+            <button id="btnTrain">Train</button>
+            <button id="btnStopTrain">Stop Training</button>
             <button id="btnShootToWin">Shoot To Win</button>
         </aside>
     </section>
@@ -75,6 +76,8 @@
         const hole = document.querySelector('.hole')
         let callback = null
         const network = new synaptic.Architect.Perceptron(4, 16, 16, 2)
+        let flagStopTraining = false
+        let trainCount = 0
 
         const startx = 150
         const starty = 480
@@ -88,7 +91,8 @@
 
         reset();
         document.getElementById('btnShootRandom').onclick = function() { shootRandom() }
-        document.getElementById('btnTrain').onclick = function() { learn(20) }
+        document.getElementById('btnTrain').onclick = function() { learn() }
+        document.getElementById('btnStopTrain').onclick = function() { stopTraining() }
         document.getElementById('btnShootToWin').onclick = function() { shootToWin() }
 
         function shootRandom(pCallback) {
@@ -190,20 +194,19 @@
             return Math.sqrt(dx + dy)
         }
 
-        function learn(times) {
-            times = times || 20
+        function learn() {
             learnTrain(_ => {
-                console.log('Finished training')
+                console.log('Finished training. Train count: ' + trainCount)
             })
 
             function learnTrain(callback) {
-                if (times <= 0) {
+                if (flagStopTraining) {
+                    flagStopTraining = false
                     if (callback) {
                         callback()
                     }
                     return
                 }
-                times--
 
                 shootRandom(_ => {
                     const ballPos = getPosition(ball)
@@ -218,10 +221,15 @@
                             normaliseAngle(angle),
                             normalisePower(power)
                         ])
+                        trainCount++
                     }
                     learnTrain(callback)
                 })
             }
+        }
+
+        function stopTraining() {
+            flagStopTraining = true
         }
 
         function shootToWin() {
