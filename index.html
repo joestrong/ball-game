@@ -31,13 +31,9 @@
         }
         main .start {
             background: #aaa;
-            bottom: 20px;
-            left: 50%;
         }
         main .hole {
             background: #000;
-            top: 80px;
-            left: 20%;
         }
         main .ball {
             background: #fff;
@@ -71,12 +67,24 @@
             <button id="btnShootToWin">Shoot To Win</button>
         </aside>
     </section>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/synaptic/1.1.4/synaptic.js"></script>
     <script>
         let score, angle, power, powerTick
         const start = document.querySelector('.start')
         const ball = document.querySelector('.ball')
         const hole = document.querySelector('.hole')
         let callback = null
+        const network = new synaptic.Architect.Perceptron(4, 16, 16, 2)
+
+        const startx = 150
+        const starty = 480
+        const holex = 150
+        const holey = 80
+
+        start.style.left = startx + 'px'
+        start.style.top = starty + 'px'
+        hole.style.left = holex + 'px'
+        hole.style.top = holey + 'px'
 
         reset();
         document.getElementById('btnShootRandom').onclick = function() { shootRandom() }
@@ -184,29 +192,49 @@
 
         function learn(times) {
             times = times || 20
-            const training_X = []
-            const training_y = []
             learnTrain(_ => {
-                console.log(JSON.stringify(training_X))
-                console.log(JSON.stringify(training_y))
+                console.log('Finished training')
             })
 
             function learnTrain(callback) {
                 if (times <= 0) {
-                    callback()
+                    if (callback) {
+                        callback()
+                    }
                     return
                 }
                 times--
+
                 shootRandom(_ => {
-                    training_X.push([Math.round(angle*100)/100, Math.round(power)])
-                    training_y.push(score)
+                    const ballPos = getPosition(ball)
+                    if (!isOutOfBounds()) {
+                        network.activate([
+                            normaliseX(startx),
+                            normaliseY(starty),
+                            normaliseX(ballPos.x),
+                            normaliseY(ballPos.y)
+                        ])
+                        network.propagate(.3, [
+                            normaliseAngle(angle),
+                            normalisePower(power)
+                        ])
+                    }
                     learnTrain(callback)
                 })
             }
         }
 
         function shootToWin() {
-            shootRandom()
+            const output = network.activate([
+                normaliseX(startx),
+                normaliseY(starty),
+                normaliseX(holex),
+                normaliseY(holey)
+            ])
+            shoot(
+                denormaliseAngle(output[0]),
+                denormalisePower(output[1])
+            )
         }
 
         function disableButtons() {
@@ -221,6 +249,46 @@
             for (var i in buttons) {
                 buttons[i].disabled = false
             }
+        }
+
+        function normalise(value, min, max) {
+            return Math.min(Math.max((value - min) / (max - min), 0), 1)
+        }
+
+        function denormalise(value, min, max) {
+            return (value * (max - min)) + min
+        }
+
+        function normaliseAngle(value) {
+            return normalise(value, 0, 2 * Math.PI)
+        }
+
+        function denormaliseAngle(value) {
+            return denormalise(value, 0, 2 * Math.PI)
+        }
+
+        function normalisePower(value) {
+            return normalise(value, 0, 100)
+        }
+
+        function denormalisePower(value) {
+            return denormalise(value, 0, 100)
+        }
+
+        function normaliseX(value) {
+            return normalise(value, 0, 300)
+        }
+
+        function denormaliseX(value) {
+            return denormalise(value, 0, 300)
+        }
+
+        function normaliseY(value) {
+            return normalise(value, 0, 500)
+        }
+
+        function denormaliseY(value) {
+            return denormalise(value, 0, 500)
         }
 
     </script>
