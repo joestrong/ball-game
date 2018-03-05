@@ -238,25 +238,23 @@
                     return
                 }
                 // Human logic
-                let tryAngle = Math.atan2((holey - starty), (holex - startx))
-                tryAngle = (tryAngle < 0) ? tryAngle + 2 * Math.PI : tryAngle
-                const tryPower = distanceBetween(getPosition(start), getPosition(hole)) / 4.4
+                let correctAngle = Math.atan2((holey - starty), (holex - startx))
+                correctAngle = (correctAngle < 0) ? correctAngle + 2 * Math.PI : correctAngle
+                const correctPower = distanceBetween(getPosition(start), getPosition(hole)) / 4.4
 
-                shoot(tryAngle, tryPower, _ => {
-                    const ballPos = getPosition(ball)
-                    if (!isOutOfBounds()) {
-                        network.activate([
-                            normaliseX(startx),
-                            normaliseY(starty),
-                            normaliseX(ballPos.x),
-                            normaliseY(ballPos.y)
-                        ])
-                        network.propagate(.3, [
-                            normaliseAngle(angle),
-                            normalisePower(power)
-                        ])
-                        trainCount++
-                    }
+                const output = network.activate([
+                    normaliseX(startx),
+                    normaliseY(starty),
+                    normaliseX(holex),
+                    normaliseY(holey)
+                ])
+
+                shoot(denormaliseAngle(output[0]), denormalisePower(output[1]), _ => {
+                    network.propagate(.3, [
+                        normaliseAngle(correctAngle),
+                        normalisePower(correctPower)
+                    ])
+                    trainCount++
                     learnTrain(callback)
                 })
             }
