@@ -82,6 +82,8 @@
         const network = new synaptic.Architect.Perceptron(4, 16, 16, 2)
         let flagStopTraining = false
         let trainCount = 0
+        let skip = 0
+        let tSkip = 0
 
         let startx = 0
         let starty = 0
@@ -158,6 +160,11 @@
                 powerTick = 0
                 return endGo();
             }
+            if (tSkip > 0) {
+                tSkip--
+                return tick()
+            }
+            tSkip = skip
             requestAnimationFrame(tick)
         }
 
@@ -216,7 +223,9 @@
         }
 
         function learn() {
+            skip = 4
             learnTrain(_ => {
+                skip = 0
                 console.log('Finished training. Train count: ' + trainCount)
             })
 
