@@ -223,7 +223,7 @@
         }
 
         function learn() {
-            skip = 4
+            skip = 10
             learnTrain(_ => {
                 skip = 0
                 console.log('Finished training. Train count: ' + trainCount)
@@ -251,7 +251,7 @@
                 ])
 
                 shoot(denormaliseAngle(output[0]), denormalisePower(output[1]), _ => {
-                    network.propagate(.3, [
+                    network.propagate(.1, [
                         normaliseAngle(correctAngle),
                         normalisePower(correctPower)
                     ])
