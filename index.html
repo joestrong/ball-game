@@ -63,13 +63,16 @@
         </main>
         <aside>
             <button id="btnShootRandom">Shoot Random</button>
-            <button id="btnTrain">Train</button>
-            <button id="btnStopTrain">Stop Training</button>
             <button id="btnShootToWin">Shoot To Win</button>
+            <hr>
+            <button id="btnTrain">Train</button>
+            <button id="btnAutoTrain">Auto-Train</button>
+            <button id="btnStopTrain">Stop Training</button>
             <hr>
             <button class="btnHoleChange" data-hole="1">Hole Position 1</button>
             <button class="btnHoleChange" data-hole="2">Hole Position 2</button>
             <button class="btnHoleChange" data-hole="3">Hole Position 3</button>
+            <button id="btnHoleChangeRandom">Random Hole</button>
         </aside>
     </section>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/synaptic/1.1.4/synaptic.js"></script>
@@ -98,11 +101,13 @@
         reset();
         document.getElementById('btnShootRandom').onclick = function() { shootRandom() }
         document.getElementById('btnTrain').onclick = function() { learn() }
+        document.getElementById('btnAutoTrain').onclick = function() { autoTrain() }
         document.getElementById('btnStopTrain').onclick = function() { stopTraining() }
         document.getElementById('btnShootToWin').onclick = function() { shootToWin() }
         document.querySelectorAll('.btnHoleChange').forEach(function(node) {
             node.onclick = function(e) { holeChange(e.target) }
         })
+        document.getElementById('btnHoleChangeRandom').onclick = function() { holeLauncher() }
 
         function shootRandom(pCallback) {
             rndAngle = randomBetween(0, 2 * Math.PI)
@@ -138,6 +143,28 @@
             holey = y
             hole.style.left = x + 'px'
             hole.style.top = y + 'px'
+        }
+
+        function holeLauncher(callback) {
+            skip = 100
+            findHole()
+
+            function findHole() {
+                shootRandom(function () {
+                    if (isOutOfBounds()) {
+                        return findHole()
+                    }
+                    holeFound()
+                })
+            }
+
+            function holeFound() {
+                skip = 0
+                moveHole(getPosition(ball))
+                if (callback) {
+                    callback()
+                }
+            }
         }
 
         function reset() {
@@ -222,19 +249,24 @@
             return Math.sqrt(dx + dy)
         }
 
-        function learn() {
+        function learn(maxIterations, callback) {
+            let iterations = 0
             skip = 10
             learnTrain(_ => {
                 skip = 0
+                trainCount += iterations
                 console.log('Finished training. Train count: ' + trainCount)
+                if (callback) {
+                    callback()
+                }
             })
 
             function learnTrain(callback) {
-                if (flagStopTraining) {
-                    flagStopTraining = false
+                if (flagStopTraining || (maxIterations && iterations >= maxIterations)) {
                     if (callback) {
                         callback()
                     }
+                    flagStopTraining = false
                     return
                 }
                 const dx = (holex - startx)
@@ -255,7 +287,7 @@
                         normaliseAngle(correctAngle),
                         normalisePower(correctPower)
                     ])
-                    trainCount++
+                    iterations++
                     learnTrain(callback)
                 })
             }
@@ -263,6 +295,20 @@
 
         function stopTraining() {
             flagStopTraining = true
+        }
+
+        function autoTrain() {
+            trainRandomHole()
+
+            function trainRandomHole() {
+                holeLauncher(function () {
+                    learn(50, function () {
+                        if (!flagStopTraining) {
+                            trainRandomHole()
+                        }
+                    })
+                })
+            }
         }
 
         function shootToWin() {
