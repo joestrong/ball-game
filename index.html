@@ -79,7 +79,7 @@
         const ball = document.querySelector('.ball')
         const hole = document.querySelector('.hole')
         let callback = null
-        const network = new synaptic.Architect.Perceptron(4, 16, 16, 2)
+        const network = new synaptic.Architect.Perceptron(2, 16, 16, 2)
         let flagStopTraining = false
         let trainCount = 0
         let skip = 0
@@ -237,16 +237,17 @@
                     }
                     return
                 }
+                const dx = (holex - startx)
+                const dy = (holey - starty)
+
                 // Human logic
-                let correctAngle = Math.atan2((holey - starty), (holex - startx))
+                let correctAngle = Math.atan2(dy, dx)
                 correctAngle = (correctAngle < 0) ? correctAngle + 2 * Math.PI : correctAngle
                 const correctPower = distanceBetween(getPosition(start), getPosition(hole)) / 4.4
 
                 const output = network.activate([
-                    normaliseX(startx),
-                    normaliseY(starty),
-                    normaliseX(holex),
-                    normaliseY(holey)
+                    normalise(dx, -300, 300),
+                    normalise(dy, -500, 500)
                 ])
 
                 shoot(denormaliseAngle(output[0]), denormalisePower(output[1]), _ => {
@@ -265,11 +266,11 @@
         }
 
         function shootToWin() {
+            const dx = (holex - startx)
+            const dy = (holey - starty)
             const output = network.activate([
-                normaliseX(startx),
-                normaliseY(starty),
-                normaliseX(holex),
-                normaliseY(holey)
+                normalise(dx, -300, 300),
+                normalise(dy, -500, 500)
             ])
             shoot(
                 denormaliseAngle(output[0]),
