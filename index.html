@@ -88,6 +88,9 @@
         let skip = 0
         let tSkip = 0
 
+        let correctAngle = null
+        let correctPower = null
+
         let startx = 0
         let starty = 0
         let holex = 0
@@ -138,9 +141,11 @@
             start.style.top = y + 'px'
         }
 
-        function moveHole({ x: x, y: y }) {
+        function moveHole({ x: x, y: y, angle: angle, power: power }) {
             holex = x
             holey = y
+            correctAngle = angle
+            correctPower = power
             hole.style.left = x + 'px'
             hole.style.top = y + 'px'
         }
@@ -160,7 +165,10 @@
 
             function holeFound() {
                 skip = 0
-                moveHole(getPosition(ball))
+                const holePos = getPosition(ball)
+                holePos.angle = angle
+                holePos.power = power
+                moveHole(holePos)
                 if (callback) {
                     callback()
                 }
@@ -272,21 +280,18 @@
                 const dx = (holex - startx)
                 const dy = (holey - starty)
 
-                // Human logic
-                let correctAngle = Math.atan2(dy, dx)
-                correctAngle = (correctAngle < 0) ? correctAngle + 2 * Math.PI : correctAngle
-                const correctPower = distanceBetween(getPosition(start), getPosition(hole)) / 4.4
-
                 const output = network.activate([
                     normalise(dx, -300, 300),
                     normalise(dy, -500, 500)
                 ])
 
                 shoot(denormaliseAngle(output[0]), denormalisePower(output[1]), _ => {
-                    network.propagate(.1, [
-                        normaliseAngle(correctAngle),
-                        normalisePower(correctPower)
-                    ])
+                    if (correctAngle && correctPower) {
+                        network.propagate(.1, [
+                            normaliseAngle(correctAngle),
+                            normalisePower(correctPower)
+                        ])
+                    }
                     iterations++
                     learnTrain(callback)
                 })
